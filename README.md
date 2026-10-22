@@ -182,7 +182,7 @@ Open the root `pom.xml`, select JDK 21+ (JDK 22.0.2 is supported), choose **Use 
 - [x] Publish-ready [technical article draft](docs/technical-post.md).
 - [x] Demo recording created and reserved for the untracked submission archive.
 - [x] [Technical article published](https://medium.com/@lcbader06/building-a-multi-client-javafx-tcp-chat-with-java-21-virtual-threads-e04a56d76763).
-- [ ] GitHub push and public/access verification.
+- [x] GitHub `main` pushed and its remote commit verified against local `HEAD` during finalization.
 - [ ] Final archive named `<StudentNames>_project1.zip`. For the current individual submission, the planned concrete name is `Badreddine_Lechhab_project1.zip`.
 - [ ] Verify every submitted attachment is present, nonempty, readable, and valid; extract-test the final ZIP.
 - [ ] Submit through the required course/LMS channel. Email submissions are not accepted.
