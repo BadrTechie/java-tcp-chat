@@ -1,24 +1,42 @@
-# Compiled class file
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Maven
+target/
+**/target/
+.mvn/timing.properties
+
+# Java and package outputs
 *.class
-
-# Log file
-*.log
-
-# BlueJ files
 *.ctxt
-
-# Mobile Tools for Java (J2ME)
 .mtj.tmp/
-
-# Package Files #
 *.jar
 *.war
 *.nar
 *.ear
-*.zip
-*.tar.gz
-*.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# Keep the official Maven Wrapper binary tracked even if a global rule ignores JARs.
+!.mvn/wrapper/maven-wrapper.jar
+
+# Generated distributions and archives
+dist/
+*.zip
+*.rar
+*.tar.gz
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.swp
+*~
 hs_err_pid*
 replay_pid*
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
