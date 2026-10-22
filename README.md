@@ -1,118 +1,149 @@
 # Java TCP Chat
 
-A university multi-client TCP chat project with separate server and client applications. The project is being delivered incrementally; this revision provides the Maven foundation only.
+A Java 21 multi-client group chat with separate JavaFX server and client applications. The server uses TCP sockets and one virtual thread per client session. Named users can chat, anonymous users connect in read-only mode, and the server operator can monitor activity and connected users.
 
-## Current milestone
+## Features
 
-Implemented:
-
-- Root Maven aggregator with `tcp-server` and `tcp-client` application modules.
-- Official Maven Wrapper 3.3.2 pinned to Apache Maven 3.9.16.
-- Java compiler release 21 with no preview features.
-- Pinned JavaFX 21.0.2 and JUnit 5.10.2 dependencies.
-- Thin `TCPServer` and `TCPClient` launchers that delegate to packaged bootstraps.
-- External server/client properties templates and JUnit launcher smoke tests.
-
-Not implemented yet:
-
-- TCP sockets, protocol messages, client sessions, virtual-thread handling, chat behavior, or configuration loading.
-- JavaFX `Application` classes, controllers, layouts, CSS, or GUI screens.
-- Final executable `TCPServer.jar` and `TCPClient.jar` artifacts.
-
-The normal module JARs produced now are build skeletons and must not be treated as the final executable deliverables.
+- Server UI with editable bind address/port, Start/Stop controls, activity log, and a live colored user list.
+- Client UI with editable connection details and optional username, chat history, composer, Send, Enter-to-send, Leave, Active Users, and online/offline status.
+- Unique server-generated anonymous labels and read-only enforcement in both client and server business code.
+- Server-authoritative timestamps and sender-inclusive broadcasts with no optimistic client echo.
+- Private `allUsers` replies, duplicate-name rejection, clean disconnect aliases, abrupt-loss cleanup, and server-shutdown notification.
+- Length-prefixed UTF-8 protocol with Base64-encoded fields, bounded frames, and safe multiline/delimiter content.
+- Headless networking code covered by loopback integration tests.
 
 ## Requirements
 
-- Windows PowerShell.
-- JDK 21 or newer. Development verification uses Temurin JDK 22.0.2 while Maven compiles with `--release 21`.
-- No global Maven installation is required.
+Runtime:
 
-Check Java:
+- Windows x64.
+- Java 21 or newer. Packaged startup was verified with Temurin JDK 22.0.2.
+- The supplied JARs include JavaFX 21.0.2 and its Windows native libraries; no separate JavaFX SDK is required.
 
-```powershell
-java -version
-javac -version
+Build:
+
+- A JDK 21+ (`javac` is required).
+- PowerShell.
+- Internet access on the first build so the Maven Wrapper can populate the local Maven cache.
+- No global Maven installation is needed.
+
+The compiler always uses Java release 21 with no preview features, even when Maven runs on JDK 22.
+
+## Architecture
+
+Each application has exactly two architectural layers:
+
+- `business`: configuration, validation, protocol framing, sockets, concurrent connection state, commands, routing, and lifecycle. This layer has no JavaFX imports and works in headless tests.
+- `presentation`: JavaFX `GridPane` screens, CSS, UI event handlers, and rendering of events received through plain Java callback interfaces.
+
+Thin default-package launchers `TCPServer` and `TCPClient` delegate to packaged bootstraps and remain separate from the JavaFX `Application` subclasses.
+
+```text
+JavaFX presentation
+        |
+        | plain method calls and callback interfaces
+        v
+business (configuration, protocol, sockets, state)
 ```
+
+There is no persistence, repository, service, or controller layer.
+
+## Configuration
+
+Configuration is external and resolved relative to the process working directory:
+
+- `config/server.properties`
+  - `server.host`: bind address, such as `0.0.0.0`
+  - `server.port`: bind port; `0` requests an OS-assigned port and is mainly useful for tests
+- `config/client.properties`
+  - `server.host`: default server hostname/address
+  - `server.port`: default server port
+
+Start the applications from the repository root so these paths resolve. The UI fields are populated from the files and remain editable before connection/start.
+
+For `TCPClient`, either supply no arguments or exactly two:
+
+```text
+java -jar TCPClient.jar [serverHost serverPort]
+```
+
+Two valid arguments override both client properties and prefill the UI. Partial or invalid arguments display an actionable configuration error and never silently fall back. Usernames are always entered live in the client UI and may be left blank for read-only mode. No production users, conversations, or machine-specific addresses are seeded in code.
 
 ## Build and test
 
-Run all commands from the repository root:
+From the repository root:
 
 ```powershell
-.\mvnw.cmd -version
 .\mvnw.cmd clean verify
 ```
 
-Build one module and its required parent project:
+The build produces:
+
+- `tcp-server\target\TCPServer.jar`
+- `tcp-client\target\TCPClient.jar`
+
+The verification suite uses ephemeral loopback ports and bounded waits. It covers configuration/CLI precedence, invalid input, multiple clients, sender-inclusive broadcasts without duplication, safe message framing, anonymous rejection in both client and server, private active-user replies, duplicate names, `allUsers`, `end`, `bye`, orderly/abrupt cleanup, and server shutdown.
+
+## Run
+
+Run from the repository root. Launch the server first, then click **START** in its UI:
 
 ```powershell
-.\mvnw.cmd -pl tcp-server -am package
-.\mvnw.cmd -pl tcp-client -am package
+java -jar .\tcp-server\target\TCPServer.jar
 ```
 
-The wrapper downloads its pinned Maven distribution into the user's Maven cache on first use.
-
-## Run the milestone placeholders
-
-After `.\mvnw.cmd clean verify`, run the non-GUI placeholder launchers from the root:
+Launch clients using configuration defaults:
 
 ```powershell
-java -cp .\tcp-server\target\tcp-server-0.1.0-SNAPSHOT.jar TCPServer
-java -cp .\tcp-client\target\tcp-client-0.1.0-SNAPSHOT.jar TCPClient localhost 3000
+java -jar .\tcp-client\target\TCPClient.jar
 ```
 
-Each launcher prints that networking and JavaFX are not implemented, then exits. Client arguments are intentionally ignored until the configuration/protocol milestone.
+Or override and prefill the server endpoint:
 
-## IntelliJ IDEA import
-
-1. Open IntelliJ IDEA and choose **Open**.
-2. Select the repository root (or its root `pom.xml`) and trust the project.
-3. When prompted, import it as a Maven project.
-4. Set the Project SDK to the installed JDK 22.0.2, or another JDK 21+.
-5. In **Settings > Build, Execution, Deployment > Build Tools > Maven**, select **Use Maven wrapper** for Maven home.
-6. Set the Maven importer and runner JDK to the same JDK 21+ installation.
-7. Reload all Maven projects and run the root `verify` lifecycle.
-
-The POM controls Java language compatibility with compiler release 21 even when IntelliJ and Maven run on JDK 22.
-
-## Repository structure
-
-```text
-.
-|-- config/
-|   |-- client.properties
-|   `-- server.properties
-|-- tcp-client/
-|   `-- src/{main,test}/{java,resources}
-|-- tcp-server/
-|   `-- src/{main,test}/{java,resources}
-|-- docs/
-|-- .mvn/wrapper/
-|-- mvnw
-|-- mvnw.cmd
-`-- pom.xml
+```powershell
+java -jar .\tcp-client\target\TCPClient.jar localhost 3000
 ```
 
-## Runtime configuration decisions
+One server plus three client processes:
 
-- `config/server.properties` will provide the server bind host and port.
-- `config/client.properties` will provide client defaults.
-- Two valid client command-line arguments will override the client properties.
-- Invalid or partial client arguments will fail with usage information rather than silently falling back.
+```powershell
+Start-Process java -ArgumentList '-jar', '.\tcp-server\target\TCPServer.jar'
+# Click START in the server window before connecting clients.
+Start-Process java -ArgumentList '-jar', '.\tcp-client\target\TCPClient.jar', 'localhost', '3000'
+Start-Process java -ArgumentList '-jar', '.\tcp-client\target\TCPClient.jar', 'localhost', '3000'
+Start-Process java -ArgumentList '-jar', '.\tcp-client\target\TCPClient.jar', 'localhost', '3000'
+```
 
-Configuration loading is planned but not implemented in this milestone.
+The assignment-compatible class names can also be invoked from the shaded JARs:
 
-## Accepted behavior decisions
+```powershell
+java -cp .\tcp-server\target\TCPServer.jar TCPServer
+java -cp .\tcp-client\target\TCPClient.jar TCPClient localhost 3000
+```
 
-- Anonymous connections receive unique labels such as `Anonymous-1 (read-only)`, appear in active-user results, receive broadcasts, and cannot send chat messages.
-- The server will broadcast each accepted message once to every active connection, including the sender; clients will not perform a local optimistic echo.
-- Thin default-package `TCPServer` and `TCPClient` launchers remain separate from future JavaFX `Application` subclasses.
+## Commands and behavior
 
-## Documentation
+- `allUsers`: requests a private active-user list. Anonymous users use the **ACTIVE USERS** button.
+- `end`, `bye`, or `leave`: cleanly disconnects.
+- **LEAVE** and window close also disconnect cleanly.
+- Enter sends for named users; Shift+Enter inserts a newline.
+- Every accepted message is formatted once by the server as `[HH:mm:ss] Username: message` and broadcast once to every active client, including its sender.
+
+See [docs/protocol.md](docs/protocol.md) for the wire format.
+
+## IntelliJ IDEA
+
+Open the root `pom.xml`, select JDK 21+ (JDK 22.0.2 is supported), choose **Use Maven wrapper**, reload Maven projects, and run the root `verify` lifecycle. Run packaged JARs from the repository root so external configuration is found.
+
+## Known limitations and remaining deliverables
+
+- The packaged JARs contain Windows JavaFX natives and are Windows-specific. Rebuild with the appropriate OpenJFX platform dependencies for another operating system.
+- Shaded JavaFX starts from the unnamed module and may log a non-fatal “unsupported JavaFX configuration” warning.
+- Automated tests cover the business layer; final visual layout, colors, keyboard behavior, and multi-window interaction still require the short manual GUI checklist.
+- UML diagrams, demo script/recording, technical blog post, final GitHub link verification, and `Badreddine_Lechhab_project1.zip` are intentionally deferred to the next milestone.
+
+## Project documents
 
 - [Requirements checklist](docs/requirements.md)
 - [Implementation and delivery plan](docs/plan.md)
-
-## Submission rule
-
-The archive name is configurable as `<StudentNames>_project<Number>.zip` or `.rar`. The current individual submission must be named `Badreddine_Lechhab_project1.zip`. The final attachment must be non-empty, readable, and uncorrupted, and must be submitted through the required course/LMS channel rather than email.
+- [Wire protocol](docs/protocol.md)

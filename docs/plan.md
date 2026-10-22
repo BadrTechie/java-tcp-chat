@@ -2,289 +2,71 @@
 
 ## Current status
 
-Milestone 0 (requirements and planning) and Milestone 1 (Maven foundation) are complete. The repository now has a Java 21-compatible two-module Maven reactor, the official Maven Wrapper, pinned JavaFX/JUnit dependencies, external properties templates, thin launcher skeletons, and launcher smoke tests. No sockets, chat behavior, JavaFX screens, final executable JARs, commit, push, or submission archive have been created.
-
-## Planned repository structure
-
-```text
-java-tcp-chat/
-|-- pom.xml                         # Parent and two-module aggregator
-|-- mvnw
-|-- mvnw.cmd
-|-- .mvn/wrapper/
-|-- config/
-|   |-- server.properties
-|   `-- client.properties
-|-- tcp-server/                     # Maven JavaFX application module
-|   |-- pom.xml
-|   `-- src/{main,test}/...
-|-- tcp-client/                     # Maven JavaFX application module
-|   |-- pom.xml
-|   `-- src/{main,test}/...
-|-- docs/
-|   |-- requirements.md
-|   |-- plan.md
-|   |-- uml/                        # Editable sources and exported diagrams
-|   |-- demo/                       # Three-minute plan and final script
-|   `-- blog/                       # Technical post draft
-|-- dist/                           # Final staged JARs/config only when requested
-|-- AGENTS.md
-`-- README.md
-```
-
-The root project uses Maven `pom` packaging. `tcp-server` and `tcp-client` are the only application modules. Each owns its model, networking, services, and JavaFX UI so neither application depends on JavaFX for headless behavior. The text protocol is documented and implemented compatibly on both sides without introducing a third application module.
-
-## Architecture plan
-
-### Server application
-
-- `TCPServer`: exact, thin default-package launcher and executable-JAR main class.
-- Packaged JavaFX launcher: creates the server UI and composition root.
-- Configuration loader: reads external server properties and validates bind address/port.
-- Chat server service: owns lifecycle, listening socket, user registry, message routing, and server events without JavaFX imports.
-- Client session handler: one virtual thread per accepted connection, UTF-8 protocol parsing, clean shutdown, and disconnect notification.
-- User registry: thread-safe identities, anonymous labels, stable list colors, and active-user snapshots.
-- JavaFX controller/adapters: subscribe to service events and marshal UI changes onto the JavaFX application thread.
-
-### Client application
-
-- `TCPClient`: exact, thin default-package launcher and executable-JAR main class.
-- Packaged JavaFX launcher: parses startup inputs, creates the client UI, and composes dependencies.
-- Configuration loader: reads external client properties; valid CLI host/port values take precedence.
-- Chat client service: connect, receive, send allowed commands/messages, expose state/events, and disconnect without JavaFX imports.
-- Client state model: named versus anonymous/read-only identity, online state, and connection lifecycle.
-- JavaFX controller/adapters: enable/disable send controls, display messages/status, and marshal service events to the JavaFX thread.
-
-### Protocol plan
-
-- Use UTF-8, line-delimited frames with explicit message types rather than interpreting arbitrary display text.
-- Define connect/identity, accepted/rejected, chat, active-users request/response, leave, presence, status, and error messages.
-- Escape or encode payloads so usernames and message text cannot break frame boundaries.
-- Format authoritative chat timestamps on the server.
-- Treat `allUsers`, `end`, and `bye` as exact user commands before creating a chat frame.
-- Ensure malformed frames fail safely without terminating the server accept loop.
-
-## Resolved design decisions
-
-1. **Configuration and CLI precedence:** external `.properties` files are runtime defaults; two client CLI arguments override client host/port. Partial or invalid arguments fail with usage information. The server has no required CLI arguments and reads server properties.
-2. **Anonymous clients:** blank usernames become unique server display identities such as `Anonymous-1 (read-only)`. They count as active connections and receive broadcasts, but cannot send messages. The typed `allUsers` command is reserved for named clients.
-3. **Broadcast semantics:** the server broadcasts an accepted, formatted chat message to every active connection, including the sender. Clients do not locally echo outgoing messages.
-4. **Launch compatibility:** thin `TCPServer` and `TCPClient` wrappers preserve the exact documented names. JAR manifests use those wrappers so classpath and `java -jar` launches are both supported.
-5. **Submission archive:** construct the archive name from configurable student names and the project number using `<StudentNames>_project<Number>.zip` or `.rar`. The current individual filename is exactly `Badreddine_Lechhab_project1.zip`. Validate that the attachment is present, non-empty, readable, and uncorrupted, and submit through the required course/LMS channel rather than email.
-
-## Maven and build plan
+Milestones 0 (requirements/planning), 1 (Maven foundation), and 2 (working application/release JARs) are complete. The repository contains a Java 21 two-module Maven build, JavaFX server and client applications, headless business layers, automated loopback tests, external properties, and executable Windows JARs.
 
-- Configure Java compiler release 21 and UTF-8 centrally in the parent POM. JDK 22.0.2 may run Maven, but generated bytecode must target Java 21 without preview features.
-- Pin Maven plugin, JUnit 5, and JavaFX dependency versions in dependency/plugin management.
-- Keep the generated official Maven Wrapper files in version control when commits are requested so Windows users run `mvnw.cmd` without a global Maven installation.
-- Configure each module as a JavaFX application with a normal main launcher that does not extend `Application` directly.
-- Use a packaging plugin such as Maven Shade to produce self-contained, Windows-compatible executable JARs with service resources merged and the correct manifest main class.
-- Rename/copy release artifacts to `dist/TCPServer.jar` and `dist/TCPClient.jar` only during the release milestone.
-- Keep external `config/server.properties` and `config/client.properties` beside the distribution and document lookup behavior.
+The remaining milestone is documentation and submission collateral: UML, manual GUI acceptance, demo recording, technical post, remote GitHub verification, and the final inspected submission archive. These remain in scope but were intentionally not created during the application-recovery milestone.
 
-Planned build and verification commands:
+## Authoritative two-layer architecture
 
-```powershell
-.\mvnw.cmd clean verify
-.\mvnw.cmd -pl tcp-server package
-.\mvnw.cmd -pl tcp-client package
-java -jar dist\TCPServer.jar
-java -jar dist\TCPClient.jar localhost 3000
-java -cp dist\TCPServer.jar TCPServer
-java -cp dist\TCPClient.jar TCPClient localhost 3000
-```
+Each application has only:
 
-## Test strategy
+1. **Business layer** (`business` package): configuration, validation, protocol framing, sockets, connected-user management, commands, message routing, thread safety, and lifecycle.
+2. **Presentation layer** (`presentation` package): JavaFX `GridPane` screens, CSS, UI events, and display of business callbacks.
 
-### Unit tests
+Thin `TCPServer`/`TCPClient` entry points and their packaged bootstraps only launch the presentation. They do not form an architectural layer.
 
-- Configuration file loading, missing keys, invalid ports, and CLI-over-properties precedence.
-- Username validation and anonymous identity assignment.
-- Protocol serialization, parsing, escaping, and malformed input.
-- Exact handling of `allUsers`, `end`, and `bye`.
-- Thread-safe user registry snapshots, joins, removals, and stable color assignment.
-- Server-side timestamp and display formatting.
-- Client lifecycle state and idempotent disconnect behavior.
+Dependency direction is presentation to business. The business layer never imports JavaFX. Plain callback interfaces (`ServerEventListener` and `ClientEventListener`) carry events to presentation code, where `Platform.runLater` performs the only JavaFX-thread handoff.
 
-### Integration tests
+There are no persistence, repository, service, controller, model, networking, configuration, or protocol layers/packages beyond focused classes contained in the required two layers.
 
-- Start the headless server on a loopback address and ephemeral port.
-- Connect multiple headless clients concurrently and verify virtual-thread sessions.
-- Verify sender-inclusive broadcast exactly once per client.
-- Verify `allUsers` returns only to the requester and includes anonymous display identities.
-- Verify anonymous clients receive messages but cannot publish chat messages.
-- Verify `end`, `bye`, `LEAVE`, orderly EOF, and abrupt socket loss remove the user and release resources.
-- Verify one malformed or failed client does not stop other sessions or the accept loop.
+## Implemented design decisions
 
-### UI and release checks
+1. **Runtime data provenance:** properties and editable fields provide endpoints; the client UI provides the optional username. Production code has no fake users, seeded messages, or machine-specific addresses.
+2. **Configuration precedence:** `config/server.properties` and `config/client.properties` are editable defaults. Exactly two client CLI arguments override both client values and prefill the UI. Partial/invalid arguments do not fall back.
+3. **Anonymous identity:** a blank username receives a unique `Anonymous-N (read-only)` label. Anonymous clients receive broadcasts and request active users but cannot publish; both client and server enforce the restriction.
+4. **Broadcasts:** the server timestamps and sends one authoritative message to every active connection, including the sender. Clients do not locally echo.
+5. **Active users:** `allUsers` and the Active Users button produce a private snapshot only for the requester.
+6. **Identity uniqueness:** named identities are unique case-insensitively and duplicates receive a clear rejection.
+7. **Protocol:** frames use a four-byte length plus UTF-8 payload. Base64-encoded fields keep tabs, Unicode, and multiline message content safe. Per-connection write locks prevent concurrent frame interleaving.
+8. **Concurrency/lifecycle:** the accept loop and each client session use virtual threads. Concurrent maps protect registries. Client/server close paths are idempotent and handle orderly disconnect, abrupt loss, and shutdown.
+9. **Packaging:** Maven Shade creates `TCPServer.jar` and `TCPClient.jar` with JavaFX dependencies and Windows x64 native libraries. Thin launchers remain separate from JavaFX `Application` classes.
 
-- Keep controller behavior testable through service fakes where practical.
-- Manually verify JavaFX `GridPane` layout, CSS, send-by-button, send-by-Enter, status label/circle, server logs, live `ListView`, and readable random user colors.
-- Run `mvnw.cmd clean verify` from a clean checkout-equivalent state.
-- Smoke-test all four launch forms listed above on the installed JDK 22.0.2 for Windows while enforcing compiler release 21.
-- Run at least three clients, including one anonymous client, during final acceptance testing.
+## Verification completed
 
-## Milestone sequence
+- Configuration loading, CLI precedence, missing/invalid inputs.
+- Ephemeral loopback server ports and bounded waits.
+- Three simultaneous clients including anonymous read-only.
+- Multiline/special-content framing and sender-inclusive delivery exactly once.
+- Private active-user results and anonymous Active Users support.
+- Client-side and server-side anonymous send rejection.
+- Duplicate named identity rejection.
+- `allUsers`, `end`, and `bye` command handling.
+- Normal and abrupt disconnect cleanup.
+- Server shutdown notification and client cleanup.
+- Business source scan confirmed no JavaFX imports.
+- `.\mvnw.cmd clean verify` passed 10 tests on Temurin JDK 22.0.2 with release 21.
+- Both executable GUI JARs remained alive with no startup exception during a bounded smoke launch.
 
-### Milestone 1 - Maven foundation
+## Remaining manual acceptance
 
-Status: completed on 2026-10-22.
+Run one server, two named clients, and one anonymous client. Confirm:
 
-- Added the root aggregator, two application modules, official Maven Wrapper, Java release 21/JavaFX/JUnit configuration, `.gitignore`, and external property templates.
-- Added exact launcher skeletons and package boundaries without implementing chat behavior or JavaFX `Application` classes.
-- Verified `.\mvnw.cmd -version`, `.\mvnw.cmd clean verify`, Java 21 class-file output, both launcher tests, and both placeholder launch commands on Windows.
-- Kept the generated module JARs as non-executable skeleton artifacts; final executable-JAR delivery remains open.
+- GridPane layout and CSS render correctly at normal Windows scaling.
+- Server Start/Stop, activity log, and live uniquely colored user rows update visibly.
+- Named Send and Enter work; Shift+Enter creates a newline.
+- Each client shows one copy of each broadcast with server time and sender.
+- Anonymous mode disables message entry/Send while receiving broadcasts and using Active Users.
+- Duplicate-name and failed-connection errors are understandable.
+- `allUsers` is private; Leave, `end`, `bye`, window close, abrupt termination, and server Stop update all statuses and lists.
 
-### Milestone 2 - Protocol and configuration
+## Next milestone: deliverables and submission
 
-- Implement and test configuration loading, CLI precedence, validation, protocol frames, command parsing, identity rules, and lifecycle models.
-- Document the wire protocol and runtime configuration.
+1. Create editable PlantUML plus exported class, deployment, use-case, connection/broadcast sequence, and active-users/disconnect sequence diagrams under `docs/uml/`.
+2. Execute the manual GUI checklist and capture final screenshots.
+3. Finalize and record the rehearsed three-minute demo with code walkthrough and live server/two named/one anonymous client behavior.
+4. Draft, review, and publish the technical article; add its link and the demo link to the README.
+5. After explicit approval, push the focused commit history and verify `https://github.com/BadrTechie/java-tcp-chat`.
+6. From a clean verified revision, create `Badreddine_Lechhab_project1.zip` excluding `.git`, IDE output, `target` directories, logs, and temporary files while including/linking every required artifact.
+7. Extract-test the archive, verify it is non-empty/readable and every link works, then submit through the course/LMS channel only after explicit approval.
 
-### Milestone 3 - Headless server core
-
-- Implement listening lifecycle, virtual-thread session handling, user registry, anonymous identities, authoritative timestamps, broadcasts, `allUsers`, disconnect handling, and server events.
-- Complete loopback integration tests without JavaFX.
-
-### Milestone 4 - Headless client core
-
-- Implement connect/send/receive/disconnect behavior, read-only enforcement, state events, and clean resource shutdown.
-- Complete multi-client integration tests against the headless server.
-
-### Milestone 5 - Server JavaFX UI
-
-- Build the `GridPane` server view, live activity log, active-user `ListView`, stable readable random colors, and start/stop/status controls as appropriate.
-- Bind it to the headless server through event adapters only.
-
-### Milestone 6 - Client JavaFX UI
-
-- Build authentication/identity flow, full chat view, read-only presentation, text area, `SEND`, Enter handling, `LEAVE`, online label/circle, message display, and errors.
-- Bind it to the headless client through event adapters only.
-
-### Milestone 7 - Packaging and acceptance
-
-- Produce `TCPServer.jar` and `TCPClient.jar`, stage editable properties, and verify classpath and executable-JAR launches.
-- Perform the complete automated and manual acceptance matrix on JDK 22.0.2/Windows with Java 21-compatible bytecode.
-
-### Milestone 8 - UML and README
-
-- Create editable and exported class, deployment, use case, and sequence UML diagrams.
-- Expand the README with project overview, requirements, architecture, setup, configuration, commands, testing, diagrams, demo link, blog link, troubleshooting, and limitations.
-
-### Milestone 9 - Demo and technical post
-
-- Record/edit the three-minute code walkthrough and live demonstration using the script below.
-- Draft, review, and publish the technical blog post; add its link to the README.
-
-### Milestone 10 - Submission
-
-- Confirm naming rules and student identity, run a clean release build, inspect every artifact/link, create the correctly named ZIP, extract-test it, and submit/share only after explicit user approval.
-
-## UML deliverables
-
-- **Class diagram:** launchers, JavaFX controllers, services, configuration, protocol types, server/session/user registry, client connection/state, interfaces, and key relationships. Keep UI dependencies pointing toward interfaces, not networking implementations.
-- **Deployment diagram:** one server JVM/node, multiple client JVM/nodes, configurable IP/port, TCP links, external properties, and executable JARs.
-- **Use case diagram:** named user, anonymous read-only user, and server operator; connect, authenticate/identify, receive, send, query active users, leave, monitor users, and inspect logs.
-- **Sequence diagram 1:** connect, identity negotiation, welcome/presence update, send, server formatting, and sender-inclusive broadcast.
-- **Sequence diagram 2:** `allUsers` private response plus `end`/`bye`/`LEAVE` disconnect and active-list update.
-- Store diagram source (preferably PlantUML) and exported PNG or SVG files so both maintainability and submission readability are covered.
-
-## README plan
-
-The final README will include:
-
-- Clear project description, feature list, screenshots, and assignment context.
-- Java 21 or newer and Windows prerequisites, IntelliJ import instructions, and Maven Wrapper use.
-- Module/package architecture and separation-of-concerns explanation.
-- Properties keys, lookup locations, defaults, and CLI precedence.
-- Build, test, classpath, and executable-JAR commands.
-- Protocol and command summary, including anonymous behavior and broadcast semantics.
-- Links/previews for all UML diagrams, the demo video, and the technical post.
-- Troubleshooting for port conflicts, firewall prompts, JavaFX startup, invalid config, and connection failures.
-- Known limitations and possible future improvements.
-
-## Three-minute demo plan and script
-
-Target length: 2:50 to 3:00, rehearsed before recording.
-
-- **0:00-0:15 - Introduction:** "This is a Java 21-compatible multi-client TCP chat application with separate JavaFX server and client Maven modules. It uses virtual threads and keeps networking independent of the UI."
-- **0:15-0:40 - Repository/build:** Show the two modules, Maven Wrapper, properties files, tests, README, and executable JARs. Briefly run or show the successful `mvnw.cmd clean verify` result.
-- **0:40-1:05 - Architecture/code:** Show the class and deployment diagrams, then point to the headless server/client services, protocol types, and thin JavaFX adapters. Mention the exact `TCPServer`/`TCPClient` launchers.
-- **1:05-1:25 - Start applications:** Launch `TCPServer.jar` and show `Server Started`/`Waiting for Client`. Launch two named clients with host/port arguments and one anonymous client from properties.
-- **1:25-1:55 - Messaging:** Send by button and Enter from different named clients. Show username/time formatting, messages delivered once to every client including the sender, server welcome/log entries, and live colored user list.
-- **1:55-2:15 - Read-only mode:** Show the anonymous display identity, disabled sending, ability to receive broadcasts, and its representation in the active-user list.
-- **2:15-2:35 - Commands:** Run `allUsers` and show the private response. Disconnect one client with `bye` or `end`, then another with `LEAVE`; show server/UI updates.
-- **2:35-2:50 - Configuration/testing:** Show editable properties and explain that valid client arguments override client defaults. Briefly show passing unit/integration tests.
-- **2:50-3:00 - Close:** "The repository includes source, executable JARs, all UML diagrams, setup documentation, the demo link, and the technical article."
-
-Recording checklist:
-
-- Use readable font scaling and crop notifications or unrelated windows.
-- Prebuild artifacts and prepopulate safe demo configuration.
-- Keep server, three clients, terminal, diagrams, and code tabs ready before recording.
-- Avoid dead time, credential exposure, personal notifications, and unverified claims.
-- Add captions or a text description and verify the final video duration and sharing permissions.
-
-## Technical blog post plan
-
-Working title: "Building a Multi-Client JavaFX TCP Chat with Java 21 Virtual Threads."
-
-Outline:
-
-1. Project goal and requirements.
-2. Why a central TCP server and line-framed protocol were chosen.
-3. Two-module architecture and keeping JavaFX out of networking/business logic.
-4. Virtual-thread client sessions and thread-safe active-user management.
-5. Runtime properties plus command-line precedence.
-6. Anonymous read-only clients, `allUsers`, and authoritative broadcasts.
-7. JavaFX thread-boundary and UI update strategy.
-8. Unit/integration testing with loopback sockets.
-9. Executable-JAR packaging and exact launcher compatibility.
-10. Challenges, tradeoffs, lessons learned, final screenshots, repository/demo links, and future improvements.
-
-Do not publish until the implementation, diagrams, commands, screenshots, and links are final and technically verified.
-
-## Commit-history plan
-
-Commits will be created only when the user requests them. Suggested focused sequence:
-
-1. `docs: capture project requirements and delivery plan`
-2. `build: add Maven wrapper and application modules`
-3. `feat(protocol): add configuration and wire messages`
-4. `feat(server): support concurrent chat sessions`
-5. `feat(client): add headless chat connection service`
-6. `feat(server-ui): add monitoring interface`
-7. `feat(client-ui): add chat interface and read-only mode`
-8. `test: cover multi-client TCP workflows`
-9. `build: package executable client and server jars`
-10. `docs: add UML diagrams and complete README`
-11. `docs: add demo and technical article links`
-
-## Submission package plan
-
-Release staging must include or clearly link:
-
-- Complete `TCPServer` and `TCPClient` Maven source projects plus root Maven Wrapper.
-- Verified `TCPServer.jar` and `TCPClient.jar` with external runtime properties.
-- Class, deployment, use case, and both sequence diagrams in editable and viewable formats.
-- Descriptive README and GitHub repository link with meaningful commit history.
-- Three-minute demo video link with correct viewing permission.
-- Published technical blog post link.
-- Any instructor cover sheet or metadata required outside the supplied PDF.
-
-Before packaging:
-
-1. Read configurable student names and the project number, then derive `<StudentNames>_project<Number>.zip` or `.rar`; for the current individual submission use `Badreddine_Lechhab_project1.zip`.
-2. Tag/check out or otherwise stage the exact verified revision without changing history unexpectedly.
-3. Run `mvnw.cmd clean verify` and all executable-JAR smoke tests.
-4. Build a clean staging directory that excludes `.git`, `.idea`, `target`, logs, secrets, and temporary files.
-5. Reject an absent or zero-byte attachment and create the correctly named archive.
-6. Extract the archive into a fresh directory, inspect for corruption and completeness, rebuild/test if expected, and verify every external link.
-7. Submit through the required course/LMS channel only after explicit user approval; never use email because emailed submissions are discarded.
-
-## Release gates
-
-The project is not ready for submission until every mandatory checkbox in `docs/requirements.md` is complete, every planned optional deliverable is present, all ambiguity decisions are reflected consistently in code/docs/demo, automated verification passes, JAR launch tests pass, links are accessible, and the ZIP name/content have been independently checked.
-
-## Next milestone
-
-Milestone 2 is protocol and configuration only: implement and test external properties loading, client CLI-over-properties precedence, validation, explicit protocol frames, command parsing, identity rules, and lifecycle models. Keep the work headless and independent of JavaFX; server sockets, multi-client sessions, chat routing, and GUI screens remain later milestones.
+Do not push, publish, record, or create the final archive without the user's explicit request.

@@ -6,6 +6,8 @@ This repository contains a university mini-project: a multi-client TCP chat syst
 
 The assignment PDF is the primary source of truth. `docs/requirements.md` is the traceable checklist, and `docs/plan.md` records implementation decisions where the PDF is ambiguous. If these documents conflict with the PDF, stop and resolve the conflict before implementing more code.
 
+Professor clarification: all user-specific and deployment-specific data must come from user input or editable configuration. The functional application must not contain fake users, seeded conversations, or hardcoded machine addresses. Test fixtures may use local example identities and loopback/ephemeral endpoints, but production behavior must always use live input or configuration.
+
 ## Incremental workflow
 
 For every milestone:
@@ -23,17 +25,21 @@ Do not commit, push, tag, publish, upload, or create the final submission archiv
 
 ## Architecture boundaries
 
-- Keep networking and business logic independent of JavaFX.
-- Code in model, protocol, configuration, and networking packages must not import `javafx.*`.
-- JavaFX controllers and views may call application services through small interfaces; they must not own sockets, blocking I/O loops, connection registries, or protocol parsing.
-- Keep dependency direction inward: JavaFX view/controller -> application service -> model/network abstractions.
-- Isolate JavaFX thread handoff at the UI boundary. Use `Platform.runLater` only in JavaFX adapters/controllers, never in the networking model.
-- Make server and client networking components usable in headless tests.
-- Use explicit lifecycle methods and make disconnect/close operations idempotent.
-- Keep shared protocol rules documented and compatible across the two applications.
-- Use virtual threads for concurrent server client sessions as required by the assignment.
+The professor requires exactly two architectural layers in each application:
 
-Recommended package boundaries are `io.github.badrtechie.tcpchat.server` and `io.github.badrtechie.tcpchat.client`, each split into `config`, `model`, `network`, `service`, and `ui` packages as needed. Thin default-package launchers named `TCPServer` and `TCPClient` are the only planned exception; they preserve the assignment's exact entry-point names and delegate immediately to packaged code.
+1. `business`: networking, socket communication, connected-user management, message processing, commands, configuration, validation, protocol, and lifecycle.
+2. `presentation`: JavaFX screens, UI event handling, JavaFX-thread handoff, and display of business events.
+
+- Business packages must not import `javafx.*` and must remain usable in headless tests.
+- Presentation calls business operations and receives events only through plain Java interfaces/callbacks.
+- Presentation must not own sockets, blocking I/O loops, connection registries, protocol parsing, or business rules.
+- Do not introduce persistence, repository, service, controller, model, network, config, or protocol architectural layers/packages. Focused classes inside `business` and `presentation` are encouraged.
+- Use `Platform.runLater` only in presentation code.
+- Use explicit lifecycle methods and keep disconnect/close operations idempotent.
+- Keep shared protocol rules documented and compatible across the two applications.
+- Use virtual threads for concurrent server client sessions and background network work.
+
+Thin default-package launchers named `TCPServer` and `TCPClient` are the only planned exception; they preserve the assignment's exact entry-point names and delegate immediately to packaged bootstrap and presentation code.
 
 ## Build and module conventions
 
@@ -42,6 +48,7 @@ Recommended package boundaries are `io.github.badrtechie.tcpchat.server` and `io
 - Use the committed Maven Wrapper (`mvnw`, `mvnw.cmd`, and `.mvn/wrapper/*`) because `mvn` is not available on PATH.
 - Run Windows commands with `mvnw.cmd`, not a globally installed Maven executable.
 - Keep runtime configuration external and editable. Do not hard-code host names or ports.
+- Do not seed production users, conversations, or connection data. Populate every live view from actual runtime state.
 - Produce executable application artifacts named `TCPServer.jar` and `TCPClient.jar` that run with `java -jar`.
 - Do not check in Maven `target/` directories, IDE build output, logs, temporary files, or generated demo data.
 
@@ -94,6 +101,12 @@ Status: completed on 2026-10-22.
 
 The root aggregator, `tcp-server` and `tcp-client` modules, official Maven Wrapper, Java release 21 build, pinned JavaFX/JUnit dependencies, external properties templates, thin launchers, packaged bootstraps, resource/test directories, and launcher tests were added. Maven 3.9.16 ran on Temurin JDK 22.0.2, `.\mvnw.cmd clean verify` passed, and emitted classes target Java 21. The module JARs are skeleton build outputs, not final executable deliverables.
 
-### Next milestone - Protocol and configuration
+### Milestone 2 - Working application and release JARs
 
-Implement and test external properties loading, client CLI precedence, validation, protocol frames, command parsing, identity rules, and lifecycle models. Keep this milestone headless: do not add server sockets, chat routing, JavaFX screens, or final executable-JAR packaging yet.
+Status: completed on 2026-10-22.
+
+Recovered the interrupted work from the Milestone 1 baseline and preserved the valid professor-clarification edits. Implemented both applications with exactly two layers (`business` and `presentation`), virtual-thread TCP networking, length-prefixed UTF-8 protocol framing, external configuration and client CLI precedence, named/anonymous identity behavior, broadcasts, private active-user responses, lifecycle cleanup, JavaFX GridPane/CSS interfaces, and Windows executable JAR packaging. Added configuration and bounded loopback integration tests; `.\mvnw.cmd clean verify` passed with 10 tests, and both packaged GUIs remained running during startup smoke checks.
+
+### Next milestone - Submission deliverables
+
+Create the class, deployment, use-case, and sequence UML diagrams; complete the manual GUI acceptance pass; prepare and record the three-minute demo; write/publish the technical post; verify the GitHub link after an explicit push request; and build/inspect `Badreddine_Lechhab_project1.zip` only when explicitly requested.
