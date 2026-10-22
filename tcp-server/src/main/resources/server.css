@@ -1,0 +1,32 @@
+.root-grid {
+    -fx-font-family: "Segoe UI";
+    -fx-font-size: 14px;
+    -fx-background-color: #f3f6fb;
+}
+
+.text-area, .list-view, .text-field {
+    -fx-background-radius: 6px;
+    -fx-border-color: #c8d2e1;
+    -fx-border-radius: 6px;
+}
+
+.button {
+    -fx-background-color: #315efb;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+}
+
+.button:disabled {
+    -fx-opacity: 0.5;
+}
+
+.status-online {
+    -fx-text-fill: #087f23;
+    -fx-font-weight: bold;
+}
+
+.status-offline {
+    -fx-text-fill: #a51d2d;
+    -fx-font-weight: bold;
+}
