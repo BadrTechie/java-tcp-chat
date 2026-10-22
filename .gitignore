@@ -24,9 +24,13 @@ target/
 
 # Generated distributions and archives
 dist/
+submission/
 *.zip
 *.rar
 *.tar.gz
+
+# Local submission recording (copied into ignored submission staging only)
+/Paradigms_Project1_Demo.mp4
 
 # Logs and temporary files
 *.log

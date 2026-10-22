@@ -2,7 +2,7 @@
 
 Repository URL: https://github.com/BadrTechie/java-tcp-chat
 
-Remote push/access verification: **pending**
+Published technical article: [Building a Multi-Client JavaFX TCP Chat with Java 21 Virtual Threads](https://medium.com/@lcbader06/building-a-multi-client-javafx-tcp-chat-with-java-21-virtual-threads-e04a56d76763)
 
 A Java 21 multi-client group chat with separate JavaFX server and client applications. The server uses TCP sockets and one virtual thread per client session. Named users can chat, anonymous users connect in read-only mode, and the server operator can monitor activity and connected users.
 
@@ -180,8 +180,8 @@ Open the root `pom.xml`, select JDK 21+ (JDK 22.0.2 is supported), choose **Use 
 - [x] Editable and rendered class, deployment, use-case, and sequence diagrams.
 - [x] Timed [three-minute demo script](docs/demo-script.md).
 - [x] Publish-ready [technical article draft](docs/technical-post.md).
-- [ ] Demo recording and accessible recording link.
-- [ ] Technical article publication and published link.
+- [x] Demo recording created and reserved for the untracked submission archive.
+- [x] [Technical article published](https://medium.com/@lcbader06/building-a-multi-client-javafx-tcp-chat-with-java-21-virtual-threads-e04a56d76763).
 - [ ] GitHub push and public/access verification.
 - [ ] Final archive named `<StudentNames>_project1.zip`. For the current individual submission, the planned concrete name is `Badreddine_Lechhab_project1.zip`.
 - [ ] Verify every submitted attachment is present, nonempty, readable, and valid; extract-test the final ZIP.
@@ -194,5 +194,6 @@ Open the root `pom.xml`, select JDK 21+ (JDK 22.0.2 is supported), choose **Use 
 - [Wire protocol](docs/protocol.md)
 - [UML index](docs/uml/README.md)
 - [Three-minute demo script](docs/demo-script.md)
-- [Technical article draft](docs/technical-post.md)
+- [Technical article source](docs/technical-post.md)
+- [Published technical article](https://medium.com/@lcbader06/building-a-multi-client-javafx-tcp-chat-with-java-21-virtual-threads-e04a56d76763)
 - [Manual GUI verification](docs/manual-verification.md)
