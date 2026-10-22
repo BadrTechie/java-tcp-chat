@@ -1,0 +1,70 @@
+@startuml
+!pragma layout smetana
+left to right direction
+title Java TCP Chat - Use Cases
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+actor "Server operator" as Operator
+actor "Named user" as Named
+actor "Anonymous user\n(read-only)" as Anonymous
+
+rectangle "TCP Chat System" {
+  package "presentation layer" #E8F1FF {
+    usecase "Enter/edit\nconnection details" as UCConnectionDetails
+    usecase "Enter optional\nusername" as UCUsername
+    usecase "Use chat controls\nand view status" as UCControls
+    usecase "Configure bind\naddress and port" as UCBind
+    usecase "Start/stop server" as UCStartStop
+    usecase "View activity log" as UCLog
+    usecase "View live colored\nconnected-user list" as UCLiveUsers
+  }
+
+  package "business layer" #EAF8EE {
+    usecase "Connect with\nnamed identity" as UCNamedConnect
+    usecase "Connect with generated\nanonymous identity" as UCAnonConnect
+    usecase "Reject duplicate\nnamed identity" as UCDuplicate
+    usecase "Send chat message" as UCSend
+    usecase "Receive broadcast" as UCReceive
+    usecase "Request private\nactive-user list" as UCAllUsers
+    usecase "Enforce anonymous\nread-only mode" as UCReadOnly
+    usecase "Disconnect cleanly" as UCDisconnect
+    usecase "Accept concurrent\nTCP clients" as UCAccept
+    usecase "Timestamp and broadcast\nonce to every client" as UCBroadcast
+  }
+}
+
+Named --> UCConnectionDetails
+Named --> UCUsername
+Named --> UCControls
+Named --> UCNamedConnect
+Named --> UCSend
+Named --> UCReceive
+Named --> UCAllUsers
+Named --> UCDisconnect
+
+Anonymous --> UCConnectionDetails
+Anonymous --> UCUsername : leave blank
+Anonymous --> UCControls
+Anonymous --> UCAnonConnect
+Anonymous --> UCReceive
+Anonymous --> UCAllUsers : Active Users button
+Anonymous --> UCDisconnect
+
+Operator --> UCBind
+Operator --> UCStartStop
+Operator --> UCLog
+Operator --> UCLiveUsers
+
+UCNamedConnect .> UCDuplicate : <<extend>>
+UCAnonConnect .> UCReadOnly : <<include>>
+UCSend .> UCBroadcast : <<include>>
+UCStartStop .> UCAccept : <<include>>
+UCAccept .> UCLiveUsers : callback update
+
+note bottom
+  Presentation collects input and displays callbacks.
+  Business owns validation, commands, sockets, users, and messages.
+end note
+@enduml

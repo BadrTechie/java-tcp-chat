@@ -107,6 +107,12 @@ Status: completed on 2026-10-22.
 
 Recovered the interrupted work from the Milestone 1 baseline and preserved the valid professor-clarification edits. Implemented both applications with exactly two layers (`business` and `presentation`), virtual-thread TCP networking, length-prefixed UTF-8 protocol framing, external configuration and client CLI precedence, named/anonymous identity behavior, broadcasts, private active-user responses, lifecycle cleanup, JavaFX GridPane/CSS interfaces, and Windows executable JAR packaging. Added configuration and bounded loopback integration tests; `.\mvnw.cmd clean verify` passed with 10 tests, and both packaged GUIs remained running during startup smoke checks.
 
-### Next milestone - Submission deliverables
+### Milestone 3 - Documentation
 
-Create the class, deployment, use-case, and sequence UML diagrams; complete the manual GUI acceptance pass; prepare and record the three-minute demo; write/publish the technical post; verify the GitHub link after an explicit push request; and build/inspect `Badreddine_Lechhab_project1.zip` only when explicitly requested.
+Status: completed on 2026-10-22.
+
+Created source-accurate class, deployment, use-case, connection/broadcast sequence, and active-users/disconnect sequence diagrams as editable PlantUML plus checked SVG/PNG exports. Added the exact 180-second demo script, publish-ready technical article, localhost deployment explanation, submission checklist, and narrowly scoped manual verification record. Updated the README, requirements, and plan. Demo recording, article publication/link, GitHub push/access verification, and final ZIP remain pending.
+
+### Next milestone - Publication and submission
+
+Record and share the demo, publish/link the technical post, perform any additional desired manual checks, verify the GitHub repository only after an explicit push request, and build/extract-test `<StudentNames>_project1.zip` only when explicitly requested. Confirm attachments are nonempty and valid, and submit through the course/LMS channel rather than email.

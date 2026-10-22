@@ -1,0 +1,75 @@
+@startuml
+title Private Active Users Response and Disconnection
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+autonumber
+
+actor "Named or anonymous user" as User
+box "Client presentation layer" #E8F1FF
+participant ClientApplication as UI
+end box
+box "Client business layer" #EAF8EE
+participant ChatClient as Client
+participant "WireProtocol\n(client copy)" as ClientWire
+end box
+box "Server business layer" #EAF8EE
+participant "ChatServer\nrequester's virtual-thread session" as Server
+participant "WireProtocol\n(server copy)" as ServerWire
+collections "Other ClientSession objects" as Others
+end box
+box "Server presentation layer" #E8F1FF
+participant ServerApplication as ServerUI
+end box
+
+group private active-user request
+  alt Active Users button (named or anonymous)
+    User -> UI : click ACTIVE USERS
+    UI -> Client : requestActiveUsers()\non virtual thread
+  else exact allUsers text (named user)
+    User -> UI : send "allUsers"
+    UI -> Client : sendMessage("allUsers")
+    Client -> Client : map exact command to requestActiveUsers()
+  end
+  Client -> ClientWire : write(USERS_REQUEST)
+  ClientWire -> ServerWire : framed TCP request
+  ServerWire -> Server : USERS_REQUEST
+  Server -> Server : sendUsers(requester)\nsort current display names
+  Server -> ClientWire : USERS(displayName...)
+  note right of Others
+    No USERS frame is sent to
+    any other connection.
+  end note
+  Client -> UI : onActiveUsers(users)
+  UI -> UI : Platform.runLater(append private result)
+end
+
+group clean client disconnection
+  alt bye, end, or leave command
+    User -> UI : submit disconnect alias
+    UI -> Client : sendMessage(alias)
+    Client -> Client : disconnect()
+  else LEAVE button or window close
+    User -> UI : click LEAVE / close window
+    UI -> Client : disconnect()
+  end
+  Client -> ClientWire : write(DISCONNECT)
+  Client -> Client : closeTransport("Disconnected.")
+  Client -> UI : onDisconnected(reason)
+  ClientWire -> ServerWire : DISCONNECT (or socket EOF)
+  ServerWire -> Server : DISCONNECT
+  Server -> Server : remove(session)\nremove maps and close socket
+  Server -> ServerUI : onUserDisconnected(user)\nonActivity(name + " disconnected")
+end
+
+group server STOP
+  actor "Server operator" as Operator
+  Operator -> ServerUI : click STOP
+  ServerUI -> Server : stop() on virtual thread
+  Server -> ClientWire : SHUTDOWN("Server stopped.")
+  Server -> Server : remove(each session)
+  Client -> Client : closeTransport("Server stopped.")
+  Client -> UI : onDisconnected("Server stopped.")
+  UI -> UI : Platform.runLater(show Offline)
+  Server -> ServerUI : onRunningChanged(false, "")
+end
+@enduml

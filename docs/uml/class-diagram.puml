@@ -1,0 +1,244 @@
+@startuml
+!pragma layout smetana
+title Java TCP Chat - Implementation Class Diagram
+skinparam backgroundColor #FFFFFF
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+hide empty fields
+
+package "tcp-server module" {
+  rectangle "Entry points (not an architectural layer)" as ServerEntry {
+    class TCPServer {
+      +{static} main(args: String[]): void
+    }
+    class ServerBootstrap {
+      +{static} start(args: String[]): void
+    }
+  }
+
+  package "presentation layer" #E8F1FF {
+    class ServerApplication {
+      -server: ChatServer
+      -users: ObservableList<ConnectedUser>
+      -userColors: Map<String, Color>
+      +{static} launchApplication(): void
+      +start(stage: Stage): void
+      +onActivity(text: String): void
+      +onUserConnected(user: ConnectedUser): void
+      +onUserDisconnected(user: ConnectedUser): void
+      +onRunningChanged(running: boolean, endpoint: String): void
+      +stop(): void
+      -loadDefaults(): void
+      -startServer(): void
+      -coloredCell(): ListCell<ConnectedUser>
+    }
+  }
+
+  package "business layer" #EAF8EE {
+    class ChatServer {
+      -sessions: Map<UUID, ClientSession>
+      -namedUsers: Map<String, UUID>
+      -running: AtomicBoolean
+      +ChatServer(listener: ServerEventListener)
+      +ChatServer(listener: ServerEventListener, clock: Clock)
+      +start(settings: ServerSettings): void
+      +isRunning(): boolean
+      +localPort(): int
+      +activeUsers(): List<ConnectedUser>
+      +stop(): void
+      +close(): void
+      -acceptLoop(): void
+      -handle(socket: Socket): void
+      -readFrames(session: ClientSession): void
+      -acceptChat(sender: ClientSession, rawMessage: String): void
+      -sendUsers(requester: ClientSession): void
+      -broadcast(frame: Frame): void
+      -remove(session: ClientSession): void
+    }
+
+    class ClientSession <<private nested>> {
+      -displayName: String
+      -readOnly: boolean
+      -socket: Socket
+      -writeLock: Object
+      -closed: AtomicBoolean
+      -user(): ConnectedUser
+      -send(frame: Frame): void
+    }
+
+    interface ServerEventListener {
+      +onActivity(text: String): void
+      +onUserConnected(user: ConnectedUser): void
+      +onUserDisconnected(user: ConnectedUser): void
+      +onRunningChanged(running: boolean, endpoint: String): void
+    }
+    class ConnectedUser <<record>> {
+      +displayName(): String
+      +readOnly(): boolean
+    }
+    class ServerSettings <<record>> {
+      +{static} DEFAULT_PATH: Path
+      +host(): String
+      +port(): int
+      +{static} load(path: Path): ServerSettings
+    }
+    class ServerInputs as "Inputs" <<package-private utility>> {
+      +{static} requireHost(value: String): String
+      +{static} parseBindPort(value: String): int
+      +{static} requireBindPort(value: int): int
+      +{static} username(value: String): String
+      +{static} message(value: String): String
+    }
+    class ServerWire as "WireProtocol" <<package-private utility>> {
+      +{static} write(output: DataOutputStream, frame: Frame): void
+      +{static} read(input: DataInputStream): Frame
+    }
+    enum ServerType as "WireProtocol.Type" {
+      HELLO
+      WELCOME
+      CHAT
+      MESSAGE
+      USERS_REQUEST
+      USERS
+      ERROR
+      DISCONNECT
+      SHUTDOWN
+    }
+    class ServerFrame as "WireProtocol.Frame" <<record>> {
+      +type(): Type
+      +fields(): List<String>
+    }
+  }
+}
+
+package "tcp-client module" {
+  rectangle "Entry points (not an architectural layer)" as ClientEntry {
+    class TCPClient {
+      +{static} main(args: String[]): void
+    }
+    class ClientBootstrap {
+      +{static} start(args: String[]): void
+    }
+  }
+
+  package "presentation layer" #E8F1FF {
+    class ClientApplication {
+      -client: ChatClient
+      +{static} setArguments(args: String[]): void
+      +{static} launchApplication(): void
+      +start(stage: Stage): void
+      +onConnected(displayName: String, readOnly: boolean): void
+      +onMessage(formattedMessage: String): void
+      +onActiveUsers(users: List<String>): void
+      +onError(error: String): void
+      +onDisconnected(reason: String): void
+      +stop(): void
+      -buildControls(): void
+      -buildLayout(): GridPane
+      -loadDefaults(): void
+      -connect(): void
+      -send(): void
+    }
+  }
+
+  package "business layer" #EAF8EE {
+    class ChatClient {
+      -listener: ClientEventListener
+      -writeLock: Object
+      -connected: AtomicBoolean
+      -readOnly: boolean
+      +ChatClient(listener: ClientEventListener)
+      +connect(settings: ClientSettings, requestedUsername: String): void
+      +isConnected(): boolean
+      +isReadOnly(): boolean
+      +displayName(): String
+      +sendMessage(rawMessage: String): void
+      +requestActiveUsers(): void
+      +disconnect(): void
+      +close(): void
+      -send(frame: Frame): void
+      -readLoop(): void
+      -closeTransport(reason: String): void
+    }
+    interface ClientEventListener {
+      +onConnected(displayName: String, readOnly: boolean): void
+      +onMessage(formattedMessage: String): void
+      +onActiveUsers(users: List<String>): void
+      +onError(message: String): void
+      +onDisconnected(reason: String): void
+    }
+    class ClientSettings <<record>> {
+      +{static} DEFAULT_PATH: Path
+      +host(): String
+      +port(): int
+      +{static} resolve(path: Path, args: String[]): ClientSettings
+    }
+    class ClientInputs as "Inputs" <<package-private utility>> {
+      +{static} requireHost(value: String): String
+      +{static} parsePort(value: String): int
+      +{static} requirePort(value: int): int
+      +{static} username(value: String): String
+      +{static} message(value: String): String
+    }
+    class ClientWire as "WireProtocol" <<package-private utility>> {
+      +{static} write(output: DataOutputStream, frame: Frame): void
+      +{static} read(input: DataInputStream): Frame
+    }
+    enum ClientType as "WireProtocol.Type" {
+      HELLO
+      WELCOME
+      CHAT
+      MESSAGE
+      USERS_REQUEST
+      USERS
+      ERROR
+      DISCONNECT
+      SHUTDOWN
+    }
+    class ClientFrame as "WireProtocol.Frame" <<record>> {
+      +type(): Type
+      +fields(): List<String>
+    }
+  }
+}
+
+class JavaFxApplication as "javafx.application.Application" <<external>>
+
+TCPServer ..> ServerBootstrap : main() calls start(args)
+ServerBootstrap ..> ServerApplication : launchApplication()
+ServerApplication --|> JavaFxApplication
+ServerApplication ..|> ServerEventListener
+ServerApplication *-- ChatServer
+ChatServer --> ServerEventListener : callbacks
+ChatServer --> ServerSettings
+ChatServer *-- "0..*" ClientSession
+ChatServer ..> ServerWire
+ChatServer ..> ServerInputs
+ServerSettings ..> ServerInputs
+ServerEventListener +-- ConnectedUser
+ServerWire +-- ServerType
+ServerWire +-- ServerFrame
+
+TCPClient ..> ClientBootstrap : main() calls start(args)
+ClientBootstrap ..> ClientApplication : setArguments(args)\nlaunchApplication()
+ClientApplication --|> JavaFxApplication
+ClientApplication ..|> ClientEventListener
+ClientApplication *-- ChatClient
+ChatClient --> ClientEventListener : callbacks
+ChatClient --> ClientSettings
+ChatClient ..> ClientWire
+ChatClient ..> ClientInputs
+ClientSettings ..> ClientInputs
+ClientWire +-- ClientType
+ClientWire +-- ClientFrame
+
+ChatClient ..> ChatServer : length-prefixed UTF-8 TCP frames
+
+note bottom
+  Exactly two architectural layers exist in each module:
+  presentation and business. Launchers/bootstraps are thin entry points,
+  not additional layers.
+end note
+@enduml

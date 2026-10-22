@@ -1,0 +1,62 @@
+@startuml
+title Connection and Sender-Inclusive Broadcast
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+autonumber
+
+actor "Named user" as User
+box "Client presentation layer" #E8F1FF
+participant ClientApplication as UI
+end box
+box "Client business layer" #EAF8EE
+participant ClientSettings as Settings
+participant ChatClient as Client
+participant "WireProtocol\n(client copy)" as ClientWire
+end box
+box "Server business layer" #EAF8EE
+participant "ChatServer\nvirtual-thread session" as Server
+participant "WireProtocol\n(server copy)" as ServerWire
+participant "ClientSession\nfor each active client" as Sessions
+end box
+box "Server presentation layer" #E8F1FF
+participant ServerApplication as ServerUI
+end box
+
+User -> UI : enter host, port, optional username\nclick CONNECT
+UI -> Settings : new ClientSettings(host, port)
+UI -> Client : connect(settings, requestedUsername)\non virtual thread
+Client -> ClientWire : write(HELLO(username))
+ClientWire -> ServerWire : length + UTF-8 frame over TCP
+ServerWire -> Server : HELLO(username)
+Server -> Server : Inputs.username()\ncase-insensitive duplicate check
+
+alt accepted named identity
+  Server -> Sessions : create ClientSession
+  Server -> ClientWire : WELCOME(displayName, false)
+  Client -> UI : onConnected(displayName, false)
+  Server -> ServerUI : onUserConnected(ConnectedUser)\nonActivity("Welcome " + displayName)
+else duplicate identity
+  Server -> ClientWire : ERROR("Username ... is already connected.")
+  Server -> Server : close socket
+  Client --> UI : connection failure message
+end
+
+User -> UI : type message and press SEND or Enter
+UI -> Client : sendMessage(rawMessage)\non virtual thread
+Client -> Client : Inputs.message(rawMessage)
+Client -> ClientWire : write(CHAT(text))
+ClientWire -> ServerWire : length + UTF-8 frame over TCP
+ServerWire -> Server : CHAT(text)
+Server -> Server : acceptChat(sender, text)\nformat [HH:mm:ss] Name: text
+Server -> Sessions : broadcast(MESSAGE(formatted))\nserialized write per connection
+loop every active client, including sender
+  Sessions -> Client : MESSAGE(formatted)
+  Client -> UI : onMessage(formatted)
+  UI -> UI : Platform.runLater(append)
+end
+
+note over Client,Server
+  There is no optimistic local echo.
+  The sender receives the same single server-authoritative broadcast.
+end note
+@enduml

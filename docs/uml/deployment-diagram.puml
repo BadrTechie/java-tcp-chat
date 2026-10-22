@@ -1,0 +1,62 @@
+@startuml
+!pragma layout smetana
+title Java TCP Chat - Deployment Diagram
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+node "Server machine" as ServerMachine {
+  node "Java 21+ JVM" as ServerJvm {
+    artifact "TCPServer.jar\n(JavaFX + Windows natives)" as ServerJar
+    component "Server presentation\nServerApplication" as ServerPresentation
+    component "Server business\nChatServer" as ServerBusiness
+  }
+  file "config/server.properties\nserver.host\nserver.port" as ServerConfig
+}
+
+node "Client machine A" as ClientA {
+  node "Java 21+ JVM" as ClientJvmA {
+    artifact "TCPClient.jar\n(JavaFX + Windows natives)" as ClientJarA
+    component "Client presentation\nClientApplication" as ClientPresentationA
+    component "Client business\nChatClient" as ClientBusinessA
+  }
+  file "config/client.properties\nserver.host\nserver.port" as ClientConfigA
+}
+
+node "Client machine B..N" as ClientN {
+  node "Java 21+ JVM per client" as ClientJvmN {
+    artifact "TCPClient.jar\n(JavaFX + Windows natives)" as ClientJarN
+    component "Client presentation\nClientApplication" as ClientPresentationN
+    component "Client business\nChatClient" as ClientBusinessN
+  }
+  file "config/client.properties\nor host/port CLI override" as ClientConfigN
+}
+
+ServerConfig --> ServerJar : editable runtime defaults
+ServerJar --> ServerPresentation
+ServerPresentation --> ServerBusiness : plain Java calls/callbacks
+ClientConfigA --> ClientJarA : editable runtime defaults
+ClientJarA --> ClientPresentationA
+ClientPresentationA --> ClientBusinessA : plain Java calls/callbacks
+ClientConfigN --> ClientJarN : defaults or CLI prefill
+ClientJarN --> ClientPresentationN
+ClientPresentationN --> ClientBusinessN : plain Java calls/callbacks
+
+ClientBusinessA -[#1F5AA6,bold]-> ServerBusiness : TCP/IP\nconfigured host:port\nlength-prefixed UTF-8 frames
+ClientBusinessN -[#1F5AA6,bold]-> ServerBusiness : TCP/IP\nsame listening endpoint
+
+note bottom of ServerMachine
+  One server JVM accepts multiple sockets.
+  The accept loop and client sessions use virtual threads.
+end note
+
+legend right
+  Production/logical deployment:
+  server and clients may run on separate Windows x64 machines.
+
+  Localhost demo deployment:
+  run one TCPServer.jar process and three TCPClient.jar
+  processes on one PC; clients use localhost:3000.
+  Each process still has its own JVM and UI window.
+endlegend
+@enduml

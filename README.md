@@ -1,5 +1,9 @@
 # Java TCP Chat
 
+Repository URL: https://github.com/BadrTechie/java-tcp-chat
+
+Remote push/access verification: **pending**
+
 A Java 21 multi-client group chat with separate JavaFX server and client applications. The server uses TCP sockets and one virtual thread per client session. Named users can chat, anonymous users connect in read-only mode, and the server operator can monitor activity and connected users.
 
 ## Features
@@ -84,6 +88,8 @@ The build produces:
 
 The verification suite uses ephemeral loopback ports and bounded waits. It covers configuration/CLI precedence, invalid input, multiple clients, sender-inclusive broadcasts without duplication, safe message framing, anonymous rejection in both client and server, private active-user replies, duplicate names, `allUsers`, `end`, `bye`, orderly/abrupt cleanup, and server shutdown.
 
+Verified result: `.\mvnw.cmd clean verify` passed 10 tests on Temurin JDK 22.0.2 while compiling with Java release 21.
+
 ## Run
 
 Run from the repository root. Launch the server first, then click **START** in its UI:
@@ -131,6 +137,32 @@ java -cp .\tcp-client\target\TCPClient.jar TCPClient localhost 3000
 
 See [docs/protocol.md](docs/protocol.md) for the wire format.
 
+## User-verified GUI results
+
+The following results, and only these results, were reported as manually verified:
+
+- Messages reach each connected client once.
+- `allUsers` responds only to its requester.
+- Anonymous clients receive messages but cannot send.
+- `bye` disconnects correctly.
+- Server **STOP** changes remaining clients to Offline.
+
+See [the manual verification record](docs/manual-verification.md) for the explicitly unclaimed checks.
+
+## UML diagrams
+
+Each diagram has editable PlantUML plus SVG and PNG exports:
+
+| Diagram | SVG | PNG | Source |
+| --- | --- | --- | --- |
+| Class | [View](docs/uml/class-diagram.svg) | [View](docs/uml/class-diagram.png) | [PlantUML](docs/uml/class-diagram.puml) |
+| Deployment | [View](docs/uml/deployment-diagram.svg) | [View](docs/uml/deployment-diagram.png) | [PlantUML](docs/uml/deployment-diagram.puml) |
+| Use case | [View](docs/uml/use-case-diagram.svg) | [View](docs/uml/use-case-diagram.png) | [PlantUML](docs/uml/use-case-diagram.puml) |
+| Connection and broadcast sequence | [View](docs/uml/sequence-connection-broadcast.svg) | [View](docs/uml/sequence-connection-broadcast.png) | [PlantUML](docs/uml/sequence-connection-broadcast.puml) |
+| Active users and disconnect sequence | [View](docs/uml/sequence-users-disconnect.svg) | [View](docs/uml/sequence-users-disconnect.png) | [PlantUML](docs/uml/sequence-users-disconnect.puml) |
+
+[Deployment notes and render instructions](docs/uml/README.md) explain the production/multi-machine view separately from the one-PC `localhost` demo.
+
 ## IntelliJ IDEA
 
 Open the root `pom.xml`, select JDK 21+ (JDK 22.0.2 is supported), choose **Use Maven wrapper**, reload Maven projects, and run the root `verify` lifecycle. Run packaged JARs from the repository root so external configuration is found.
@@ -138,12 +170,29 @@ Open the root `pom.xml`, select JDK 21+ (JDK 22.0.2 is supported), choose **Use 
 ## Known limitations and remaining deliverables
 
 - The packaged JARs contain Windows JavaFX natives and are Windows-specific. Rebuild with the appropriate OpenJFX platform dependencies for another operating system.
-- Shaded JavaFX starts from the unnamed module and may log a non-fatal “unsupported JavaFX configuration” warning.
-- Automated tests cover the business layer; final visual layout, colors, keyboard behavior, and multi-window interaction still require the short manual GUI checklist.
-- UML diagrams, demo script/recording, technical blog post, final GitHub link verification, and `Badreddine_Lechhab_project1.zip` are intentionally deferred to the next milestone.
+- Shaded JavaFX starts from the unnamed module and may log a non-fatal "unsupported JavaFX configuration" warning.
+- The protocol is plain TCP without TLS, authentication, private messages, or persistent history.
+- Manual GUI checks not listed in the user-verified section remain unclaimed.
+
+## Submission checklist
+
+- [x] Working source, Maven Wrapper, tests, executable JAR build, protocol documentation, and descriptive README.
+- [x] Editable and rendered class, deployment, use-case, and sequence diagrams.
+- [x] Timed [three-minute demo script](docs/demo-script.md).
+- [x] Publish-ready [technical article draft](docs/technical-post.md).
+- [ ] Demo recording and accessible recording link.
+- [ ] Technical article publication and published link.
+- [ ] GitHub push and public/access verification.
+- [ ] Final archive named `<StudentNames>_project1.zip`. For the current individual submission, the planned concrete name is `Badreddine_Lechhab_project1.zip`.
+- [ ] Verify every submitted attachment is present, nonempty, readable, and valid; extract-test the final ZIP.
+- [ ] Submit through the required course/LMS channel. Email submissions are not accepted.
 
 ## Project documents
 
 - [Requirements checklist](docs/requirements.md)
 - [Implementation and delivery plan](docs/plan.md)
 - [Wire protocol](docs/protocol.md)
+- [UML index](docs/uml/README.md)
+- [Three-minute demo script](docs/demo-script.md)
+- [Technical article draft](docs/technical-post.md)
+- [Manual GUI verification](docs/manual-verification.md)

@@ -2,9 +2,9 @@
 
 ## Current status
 
-Milestones 0 (requirements/planning), 1 (Maven foundation), and 2 (working application/release JARs) are complete. The repository contains a Java 21 two-module Maven build, JavaFX server and client applications, headless business layers, automated loopback tests, external properties, and executable Windows JARs.
+Milestones 0 (requirements/planning), 1 (Maven foundation), 2 (working application/release JARs), and 3 (documentation) are complete. The repository contains a Java 21 two-module Maven build, JavaFX server and client applications, headless business layers, automated loopback tests, external properties, executable Windows JARs, rendered UML, a timed demo script, and a publish-ready technical article.
 
-The remaining milestone is documentation and submission collateral: UML, manual GUI acceptance, demo recording, technical post, remote GitHub verification, and the final inspected submission archive. These remain in scope but were intentionally not created during the application-recovery milestone.
+Remaining release work is deliberately external or destructive: record/share the demo, publish/link the article, push and verify GitHub access, complete any desired additional manual checks/screenshots, then create and extract-test the final submission archive.
 
 ## Authoritative two-layer architecture
 
@@ -47,26 +47,31 @@ There are no persistence, repository, service, controller, model, networking, co
 - `.\mvnw.cmd clean verify` passed 10 tests on Temurin JDK 22.0.2 with release 21.
 - Both executable GUI JARs remained alive with no startup exception during a bounded smoke launch.
 
-## Remaining manual acceptance
+## Manual verification status
 
-Run one server, two named clients, and one anonymous client. Confirm:
+The user verified only these GUI results: each connected client receives each message once; `allUsers` is private to its requester; anonymous clients receive but cannot send; `bye` disconnects; and server STOP changes remaining clients to Offline.
 
-- GridPane layout and CSS render correctly at normal Windows scaling.
-- Server Start/Stop, activity log, and live uniquely colored user rows update visibly.
-- Named Send and Enter work; Shift+Enter creates a newline.
-- Each client shows one copy of each broadcast with server time and sender.
-- Anonymous mode disables message entry/Send while receiving broadcasts and using Active Users.
-- Duplicate-name and failed-connection errors are understandable.
-- `allUsers` is private; Leave, `end`, `bye`, window close, abrupt termination, and server Stop update all statuses and lists.
+No other manual GUI check is claimed as passed. `docs/manual-verification.md` lists examples that remain unclaimed, even where automated business-layer coverage exists.
 
-## Next milestone: deliverables and submission
+## Milestone 3 - Documentation
 
-1. Create editable PlantUML plus exported class, deployment, use-case, connection/broadcast sequence, and active-users/disconnect sequence diagrams under `docs/uml/`.
-2. Execute the manual GUI checklist and capture final screenshots.
-3. Finalize and record the rehearsed three-minute demo with code walkthrough and live server/two named/one anonymous client behavior.
-4. Draft, review, and publish the technical article; add its link and the demo link to the README.
-5. After explicit approval, push the focused commit history and verify `https://github.com/BadrTechie/java-tcp-chat`.
-6. From a clean verified revision, create `Badreddine_Lechhab_project1.zip` excluding `.git`, IDE output, `target` directories, logs, and temporary files while including/linking every required artifact.
-7. Extract-test the archive, verify it is non-empty/readable and every link works, then submit through the course/LMS channel only after explicit approval.
+Status: completed on 2026-10-22.
+
+- Added implementation-derived class, deployment, use-case, connection/broadcast sequence, and active-users/disconnect sequence diagrams.
+- Stored editable PlantUML and rendered SVG/PNG under `docs/uml/`; PlantUML 1.2024.8 parsed and rendered all five sources without syntax errors.
+- Documented the multi-machine deployment and the separate one-PC `localhost:3000` demo arrangement.
+- Added `docs/demo-script.md` with an exact 180-second source and live-demo walkthrough.
+- Added `docs/technical-post.md` with source-accurate architecture, protocol, concurrency, JavaFX, testing, and packaging explanations.
+- Updated requirements and README links/status without marking recording, publication, push/access verification, or archive work complete.
+
+## Next milestone: publication and submission
+
+1. Rehearse and record the three-minute demo; upload it and verify the recording link is accessible.
+2. Publish `docs/technical-post.md` and add the published URL.
+3. Complete any desired remaining manual GUI checks and capture final screenshots without changing the already recorded verification scope.
+4. After explicit approval, push the focused commit history and verify `https://github.com/BadrTechie/java-tcp-chat`.
+5. From a clean verified revision, create `<StudentNames>_project1.zip` (currently `Badreddine_Lechhab_project1.zip`), excluding `.git`, IDE output, `target` directories, logs, and temporary files while including/linking every required artifact.
+6. Confirm every attachment is present, nonempty, readable, and valid; extract-test the ZIP and verify every external link.
+7. Submit through the course/LMS channel only. Email submissions are not accepted.
 
 Do not push, publish, record, or create the final archive without the user's explicit request.

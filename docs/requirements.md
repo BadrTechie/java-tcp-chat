@@ -100,8 +100,8 @@ Checkboxes represent implementation or delivery status, not whether a requiremen
 - [x] Provide a fully functional Maven project for `TCPClient` source code.
 - [x] Produce an executable `TCPServer.jar`.
 - [x] Produce an executable `TCPClient.jar`.
-- [ ] Create a class diagram showing software structure and relationships between classes.
-- [ ] Create a deployment diagram showing server and client nodes and their TCP/IP links.
+- [x] Create a class diagram showing software structure and relationships between classes.
+- [x] Create a deployment diagram showing server and client nodes and their TCP/IP links.
 - [ ] Record a three-minute demo video.
 - [ ] Include a walkthrough of the source code in the demo video.
 - [ ] Include a live demonstration of application features in the demo video.
@@ -114,19 +114,19 @@ Checkboxes represent implementation or delivery status, not whether a requiremen
 
 The PDF marks use case/sequence diagrams and the technical post as optional. This project plans to deliver all of them.
 
-- [ ] Create a use case diagram covering named users, anonymous read-only users, and server/operator interactions.
-- [ ] Create sequence diagrams that clarify connection, authentication, broadcast, `allUsers`, and disconnect flows.
+- [x] Create a use case diagram covering named users, anonymous read-only users, and server/operator interactions.
+- [x] Create sequence diagrams that clarify connection, authentication, broadcast, `allUsers`, and disconnect flows.
 - [ ] Publish a technical blog post on Medium, Dev.to, or a personal site/forum.
-- [ ] Explain the development process in the technical post.
-- [ ] Explain important technical challenges and decisions in the technical post.
-- [ ] Describe the final implementation in the technical post.
+- [x] Explain the development process in the technical post.
+- [x] Explain important technical challenges and decisions in the technical post.
+- [x] Describe the final implementation in the technical post.
 - [ ] Add the published technical post link to the README and submission materials.
 
 ## 6. Submission packaging
 
 The following additional submission guidelines are authoritative for final delivery.
 
-- [ ] Name the archive `<StudentNames>_project<Number>.zip` or `<StudentNames>_project<Number>.rar`.
+- [ ] Name the archive `<StudentNames>_project1.zip`.
 - [ ] For this individual submission, use the exact filename `Badreddine_Lechhab_project1.zip`.
 - [ ] Keep the student-name portion configurable so the correct names can be substituted if the submission becomes a group submission.
 - [ ] Include or link every required source, JAR, UML export/source, README, demo video, and blog post from the submission package.
@@ -181,4 +181,10 @@ Accepted decision: provide thin default-package classes named exactly `TCPServer
 
 ### Submission archive identity
 
-Accepted rule: construct the filename from configurable student names and the project number using `<StudentNames>_project<Number>.zip` or `.rar`. The current individual filename is `Badreddine_Lechhab_project1.zip`. Final verification must reject a missing, empty, unreadable, or corrupted archive, and the archive must be submitted through the required course/LMS channel rather than email.
+Accepted rule: for this assignment, construct the ZIP filename as `<StudentNames>_project1.zip`. The current individual filename is `Badreddine_Lechhab_project1.zip`. Final verification must reject a missing, empty, unreadable, or corrupted archive, and the archive must be submitted through the required course/LMS channel rather than email.
+
+## Verification evidence
+
+Automated evidence: `.\mvnw.cmd clean verify` passed 10 tests on Temurin JDK 22.0.2 with Java release 21.
+
+User-verified GUI evidence is intentionally limited to: messages reaching each connected client once; private `allUsers` response; anonymous receive-without-send behavior; `bye` disconnection; and server STOP changing remaining clients to Offline. No other manual checks are claimed as passed. See `docs/manual-verification.md`.
